@@ -25,12 +25,12 @@ function App() {
   const steps = {
     welcome: <Welcome onClickStart={startGame} />,
     typing: <Typing onFinish={finishGame} />,
-    result: <Result stats={stats} />,
+    result: <Result stats={stats} onClickStart={startGame} />,
   };
 
   return (
     <div className="App">
-      <div class="common-rect">{steps[step]}</div>
+      <div className="common-rect">{steps[step]}</div>
     </div>
   );
 }

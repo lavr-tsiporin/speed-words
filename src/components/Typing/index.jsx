@@ -1,86 +1,119 @@
-import React from 'react';
-
-const texts = [
-  'Наверное, вы еще не готовы к такой музыке, но вашим детям она понравится',
-  'Тото, у меня такое ощущение, что мы больше не в Канзасе',
-  'Не судите меня за прошлое, я не живу там больше.',
-  'Все делай тихо и о тебе заговорят громко',
-];
-
-const sentence = texts[Math.floor(Math.random() * texts.length)];
-const words = sentence.split(' ');
+import React, { useState, useEffect, useRef } from 'react';
+import axios from "axios";
+import { Spin } from "../Spin/Spin";
 
 export const Typing = ({ onFinish }) => {
-  const curIndexRef = React.useRef(0);
-  const timerRef = React.useRef(null);
-  const [sec, setSec] = React.useState(20);
-  const [wordsCount, setWordsCount] = React.useState(0);
-  const [inputValue, setInputValue] = React.useState('');
-  const [currentWord, setCurrentWord] = React.useState(words[0]);
-  const [isError, setIsError] = React.useState(false);
+  const words = useRef([]);
+  const timerRef = useRef(null);
+  const curIndexRef = useRef(0);
+  const [inputValue, setInputValue] = useState('')
 
-  React.useEffect(() => {
+  const [data, setData] = useState({
+    sec: 20,
+    wordsCount: 0,
+    currentWord: '',
+    isErrorTyping: false,
+    isLoading: false
+  })
+
+  const randomText = (texts = []) => {
+    const sentence = texts[Math.floor(Math.random() * texts.length)];
+    return sentence.split(' ').map(el => el.toLowerCase())
+  }
+
+  const updateData = (key, value) => {
+    setData({
+      ...data,
+      [key]: value
+    })
+  }
+
+  useEffect(() => {
+    async function getTexts() {
+      try {
+        setData(prev => ({ ...prev, isLoading: true }))
+        const response = await axios.get('https://617cf7151eadc50017136369.mockapi.io/api/archakov/speedwords')
+        const result = randomText(response.data[0]?.text)
+        setData(prev => ({ ...prev, isLoading: false, currentWord: result[0] }))
+        words.current = result
+      } catch (e) {
+        console.log(e)
+      }
+    }
+
+    getTexts()
+  }, []);
+
+  useEffect(() => {
     timerRef.current = setInterval(() => {
-      setSec((prev) => {
-        const value = prev - 1;
+      setData((prev) => {
+
+        if (prev.isLoading) {
+          return prev
+        }
+
+        const value = prev.sec - 1
 
         if (!value) {
           clearInterval(timerRef.current);
           onFinish(curIndexRef.current, 20 - value);
         }
 
-        return value;
-      });
+        return { ...prev, sec: value };
+      })
     }, 1000);
-  }, []);
+  }, [onFinish])
 
   const onChangeInput = (e) => {
     const { value } = e.target;
 
-    if (currentWord === value) {
+    if (data.currentWord === value) {
       curIndexRef.current += 1;
 
-      if (curIndexRef.current >= words.length - 1) {
+      if (curIndexRef.current >= words.current.length - 1) {
         clearInterval(timerRef.current);
-        onFinish(curIndexRef.current, sec);
+        onFinish(curIndexRef.current, data.sec);
         return;
       }
 
-      setCurrentWord(words[curIndexRef.current]);
+      updateData('currentWord', words.current[curIndexRef.current])
       setInputValue('');
-      setWordsCount((prev) => prev + 1);
+      updateData('wordsCount', data.wordsCount + 1);
       return;
     }
 
-    if (!new RegExp(`^${value}`).test(currentWord)) {
-      setIsError(true);
-    } else {
-      setIsError(false);
-    }
+    !new RegExp(`^${value}`).test(data.currentWord)
+      ? updateData('isErrorTyping', true)
+      : updateData('isErrorTyping', false)
 
-    setInputValue(e.target.value.trim());
+    setInputValue(value.trim().toLowerCase())
   };
 
   return (
-    <div class="flex typing">
-      <p class="typing__enter-word">Введите слово:</p>
-      <h3 class="typing__word">{currentWord}</h3>
-      <input
-        value={inputValue}
-        onChange={onChangeInput}
-        class={`typing__input ${isError ? 'error' : ''}`}
-        type="text"
-      />
-      <div class="typing__progress">
-        <div class="typing__timer">
-          <p>Осталось времени:</p>
-          <b>{sec} сек.</b>
-        </div>
-        <div class="typing__counter">
-          <p>Введено слов:</p>
-          <b>{wordsCount}</b>
+    <>
+      {data.isLoading && <Spin/>}
+      <div className={data.isLoading ? "flex typing typing__blur" : "flex typing"}>
+        <p className="typing__enter-word">Введите слово:</p>
+        <h3 className="typing__word">{data.currentWord}</h3>
+        <input
+          value={inputValue}
+          onChange={onChangeInput}
+          className={`typing__input ${data.isErrorTyping ? 'error' : ''}`}
+          type="text"
+        />
+        <div className="typing__progress">
+          <div className="typing__timer">
+            <p>Осталось времени:</p>
+            <b>{data.sec} сек.</b>
+          </div>
+          <div className="typing__counter">
+            <p>Введено слов:</p>
+            <b>{data.wordsCount}</b>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
+
+
 };

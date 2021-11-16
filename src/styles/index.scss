@@ -17,6 +17,7 @@ body {
   width: 560px;
   box-shadow: 0 10px 14px rgba(0, 0, 0, 0.03);
   border-radius: 30px;
+  position: relative;
 }
 .button {
   position: relative;
@@ -112,6 +113,9 @@ body {
 .typing {
   font-family: 'Inter', sans-serif;
   padding: 65px 90px 60px;
+}
+.typing__blur{
+  filter: blur(5px);
 }
 .typing__input {
   border: 1px solid #a9acc3;
