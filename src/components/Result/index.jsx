@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const Result = ({ stats, onClickStart }) => {
+export const Result = ({ stats, onClickRetry }) => {
   return (
     <div className="flex result">
       <div className="result__top-icon">😓</div>
@@ -8,7 +8,7 @@ export const Result = ({ stats, onClickStart }) => {
         Неплохо! За <b>{stats.sec} секунд</b>, ты ввел:
       </p>
       <div className="result__number-of-words">{stats.words} слова</div>
-      <button className="button" onClick={onClickStart}>🤔 Попробовать снова?</button>
+      <button className="button" onClick={onClickRetry}>🤔 Попробовать снова?</button>
     </div>
   );
 };
